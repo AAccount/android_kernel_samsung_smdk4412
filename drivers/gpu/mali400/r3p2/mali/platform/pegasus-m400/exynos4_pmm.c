@@ -115,16 +115,13 @@ static unsigned int asv_3d_volt_9_table_1ghz_type[MALI_DVFS_STEPS-1][ASV_LEVEL] 
 #endif
 };
 static unsigned int asv_3d_volt_9_table[MALI_DVFS_STEPS-1][ASV_LEVEL] = {
-	{  950000,  937500,  925000,  912500,  900000,  887500,  875000,  862500,  875000,  862500,  850000,  850000},  /* L4(160Mhz) */
+	{  950000,  925000,  900000,  900000,  875000,  875000,  875000,  875000,  850000,  850000,  850000,  850000},  /* L3(160Mhz) */
 #if (MALI_DVFS_STEPS > 1)
-	{  975000,  962500,  950000,  937500,  925000,  912500,  900000,  887500,  900000,  887500,  875000,  875000},	/* L3(266Mhz) */
+	{  975000,  950000,  925000,  925000,  925000,  900000,  900000,  875000,  875000,  875000,  875000,  850000},  /* L2(266Mhz) */
 #if (MALI_DVFS_STEPS > 2)
-	{ 1025000, 1012500, 1000000,  987500,  975000,  962500,  950000,  937500,  950000,  937500,  912500,  900000},	/* L2(350Mhz) */
+	{ 1050000, 1025000, 1000000, 1000000,  975000,  950000,  950000,  950000,  925000,  925000,  925000,  900000},  /* L1(350Mhz) */
 #if (MALI_DVFS_STEPS > 3)
-	{ 1087500, 1075000, 1062500, 1050000, 1037500, 1025000, 1012500, 1000000, 1012500, 1000000,  975000,  962500},	/* L1(440Mhz) */
-#if (MALI_DVFS_STEPS > 4)
-	{ 1150000, 1137500, 1125000, 1112500, 1100000, 1087500, 1075000, 1062500, 1075000, 1062500, 1037500, 1025000},	/* L0(533Mhz) */
-#endif
+	{ 1100000, 1075000, 1050000, 1050000, 1050000, 1025000, 1025000, 1000000, 1000000, 1000000,  975000,  950000},  /* L0(440Mhz) */
 #endif
 #endif
 #endif
@@ -738,41 +735,31 @@ static unsigned int decideNextStatus(unsigned int utilization)
 {
 	static unsigned int level = 0;
 	int iStepCount = 0;
-	if (mali_runtime_resumed >= 0) 
-	{
+	if (mali_runtime_resumed >= 0) {
 		level = mali_runtime_resumed;
 		mali_runtime_resumed = -1;
 	}
 
-	if (mali_dvfs_control == 0 && level == get_mali_dvfs_status()) 
-	{
+	if (mali_dvfs_control == 0 && level == get_mali_dvfs_status()) {
 		if (utilization > (int)(255 * mali_dvfs[maliDvfsStatus.currentStep].upthreshold / 100) &&
-				level < MALI_DVFS_STEPS - 1) 
-		{
+				level < MALI_DVFS_STEPS - 1) {
 			level++;
-			/**if ((samsung_rev() < EXYNOS4412_REV_2_0) && 3 == get_mali_dvfs_status()) 
-			{
-				level=get_mali_dvfs_status(); //fuck marketing again. it's the same gpu
-			}*/
+			if ((samsung_rev() < EXYNOS4412_REV_2_0) && 3 == get_mali_dvfs_status()) {
+				level=get_mali_dvfs_status();
+			}
 		}
 		else if (utilization < (int)(255 * mali_dvfs[maliDvfsStatus.currentStep].downthreshold / 100) &&
-				level > 0) 
-		{
+				level > 0) {
 			level--;
 		}
 
-		if (_mali_osk_atomic_read(&bottomlock_status) > 0) 
-		{
+		if (_mali_osk_atomic_read(&bottomlock_status) > 0) {
 			if (level < bottom_lock_step)
 				level = bottom_lock_step;
 		}
-	} 
-	else 
-	{
-		for (iStepCount = MALI_DVFS_STEPS-1; iStepCount >= 0; iStepCount--) 
-		{
-			if ( mali_dvfs_control >= mali_dvfs[iStepCount].clock ) 
-			{
+	} else {
+		for (iStepCount = MALI_DVFS_STEPS-1; iStepCount >= 0; iStepCount--) {
+			if ( mali_dvfs_control >= mali_dvfs[iStepCount].clock ) {
 				level = iStepCount;
 				break;
 			}
